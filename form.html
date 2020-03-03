@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+
+    <script>
+    
+    var delay = 6000
+    var dlTrigger
+    
+    
+    function repeatFetchGMails() 
+    { 
+//      dlTrigger = setInterval(callFetchGMails(), 6000)
+        callFetchGMails()
+    }
+    
+    function callFetchGMails() {
+      document.getElementById('messages').innerHTML = 'Fetching';
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .fetchFromGmail();   
+    }
+    
+    
+      
+    function onSuccess(sHref) 
+    {
+      console.log(sHref);
+      if(new String(sHref).valueOf() == new String("").valueOf())
+      {
+        document.getElementById('messages').innerHTML = 'Nothing to download';
+        clearInterval(dlTrigger)
+      }
+      else
+      {
+        var urls = JSON.parse(sHref)
+        console.log(urls.length)
+        for (let i = 0; i < urls.length; i++) {
+          let lastUrl = false;
+          if (i == urls.length - 1) {
+            lastUrl = true;
+            console.log('Last Message in Thread'+ i)
+          }
+          console.log(urls[i]+lastUrl)
+          setTimeout(function () {
+            download(urls[i], lastUrl);
+          }, 3000 * i);
+          
+        }
+        //document.getElementById('messages').innerHTML = 'Success';
+        //document.getElementById('HiddenClick').href = sHref;
+        //document.getElementById('HiddenClick').click(); // Must enable Pop Ups for https://script.google.com
+      }
+    }
+    
+    function onFailure(error) 
+    {
+      document.getElementById('messages').innerHTML = error.message;
+    }
+    
+    function download(url, lastUrl) {
+      let link = document.createElement('a');
+    
+      link.setAttribute('download', null);
+      //link.style.display = 'none';
+      let linkText = document.createTextNode("ID:"+url.slice(-16));
+      link.appendChild(linkText);
+    
+      document.body.appendChild(link);
+      if ( lastUrl == true ) {
+         url = url + "&lastUrl=true"
+         setTimeout(function () {
+           callFetchGMails()
+         }, 6000);
+      }
+    
+      console.log("Prepare for download: " + url + lastUrl);
+      link.setAttribute('href', url);
+      link.click();
+      
+      setTimeout(() => document.body.removeChild(link), 6000);
+    }
+    
+    </script>
+  </head>
+  <body>
+    <div id="messages">Waiting to DownLoad! Its mee</div>
+    <div>
+      <a id="HiddenClick" href="" target="_blank" onclick="google.script.host.close" style="visibility: hidden;">Hidden Click</a>
+    </div>
+    <div>
+      <button type="button" onclick='repeatFetchGMails();' id="Fetch">Fetch Now!</button> 
+    </div>
+  </body>
+</html>
